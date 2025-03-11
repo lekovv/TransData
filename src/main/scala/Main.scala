@@ -1,4 +1,4 @@
-import endpoints.Health
+import endpoints.{Health, Endpoints}
 import zio.Console.printLine
 import zio.Runtime.setConfigProvider
 import zio._
@@ -14,7 +14,7 @@ object Main extends ZIOAppDefault {
           .fromResourcePath()
       )
 
-  private val allRoutes = Health.routes
+  private val allRoutes = Health.routes ++ Endpoints.routes
 
   private def startServer = Server.serve(allRoutes)
 

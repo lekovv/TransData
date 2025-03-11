@@ -1,4 +1,6 @@
 import config.ConfigApp
+import service.transaction.TransactionRepo
+import service.user.UserRepo
 import zio._
 import zio.http._
 import zio.http.netty.NettyConfig
@@ -28,5 +30,7 @@ object Layers {
     runtime >+>
       base >+>
       client >+>
-      server
+      server >+>
+      UserRepo.live >+>
+      TransactionRepo.live
 }
