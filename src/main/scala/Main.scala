@@ -1,4 +1,5 @@
-import endpoints.{Health, Endpoints}
+import endpoints.{Endpoints, Health}
+import service.spark.SparkServiceLive
 import zio.Console.printLine
 import zio.Runtime.setConfigProvider
 import zio._
@@ -20,9 +21,11 @@ object Main extends ZIOAppDefault {
 
   private val program =
     for {
-      _ <- ZIO.logInfo("Server is running")
-      _ <- startServer.exitCode
-    } yield ()
+      _     <- ZIO.logInfo("Server is running")
+      http  <- startServer.exitCode.fork
+      spark <- ZIO.serviceWithZIO[SparkServiceLive](_.analyzeData()).fork
+      code  <- http.join *> spark.join
+    } yield code
 
   override def run: UIO[ExitCode] = {
     program

@@ -1,4 +1,5 @@
 import config.ConfigApp
+import service.spark.{Spark, SparkServiceLive}
 import service.transaction.TransactionRepo
 import service.user.UserRepo
 import zio._
@@ -32,5 +33,7 @@ object Layers {
       client >+>
       server >+>
       UserRepo.live >+>
-      TransactionRepo.live
+      TransactionRepo.live >+>
+      Spark.live >+>
+      SparkServiceLive.layer
 }
