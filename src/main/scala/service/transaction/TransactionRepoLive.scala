@@ -23,16 +23,16 @@ final case class TransactionRepoLive(ds: DataSource) extends TransactionRepo {
 
   override def createTransactions(transactionsRequest: List[TransactionsRequest]): Task[List[UUID]] = {
 
-    val transactionInserts = transactionsRequest.map(transactionsRequest => {
+    val transactionInserts = transactionsRequest.map(transactionRequest => {
       val id      = UUID.randomUUID()
       val created = LocalDateTime.now()
 
       val transaction = TransactionsModel(
         id,
-        transactionsRequest.userId,
-        transactionsRequest.amount,
-        transactionsRequest.transactionType,
-        transactionsRequest.description,
+        transactionRequest.userId,
+        transactionRequest.amount,
+        transactionRequest.transactionType,
+        transactionRequest.description,
         created
       )
 

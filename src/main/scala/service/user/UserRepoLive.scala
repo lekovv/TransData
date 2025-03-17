@@ -21,27 +21,30 @@ final case class UserRepoLive(ds: DataSource) extends UserRepo {
     querySchema[UserModel]("public.user")
   }
 
-  override def createUser(userRequest: UserRequest): Task[UUID] = {
+  override def createUser(usersRequest: List[UserRequest]): Task[List[UUID]] = {
 
-    val id      = UUID.randomUUID()
-    val created = LocalDateTime.now()
+    val userInserts = usersRequest.map(userRequest => {
+      val id      = UUID.randomUUID()
+      val created = LocalDateTime.now()
 
-    val user = UserModel(
-      id,
-      userRequest.email,
-      userRequest.firstName,
-      userRequest.lastName,
-      userRequest.country,
-      created
-    )
-
-    ctx
-      .run(userSchema.insertValue(lift(user)).returning(_.id))
-      .mapBoth(
-        err => InternalDatabaseException(err.getMessage),
-        _ => id
+      val user = UserModel(
+        id,
+        userRequest.email,
+        userRequest.firstName,
+        userRequest.lastName,
+        userRequest.country,
+        created
       )
-      .provide(dsZL)
+
+      ctx
+        .run(userSchema.insertValue(lift(user)).returning(_.id))
+        .mapBoth(
+          err => InternalDatabaseException(err.getMessage),
+          _ => id
+        )
+    })
+
+    ZIO.collectAll(userInserts).provide(dsZL)
   }
 }
 

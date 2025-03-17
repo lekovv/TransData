@@ -7,10 +7,9 @@ import java.util.UUID
 
 object UserService {
 
-  def createUser(userRequest: UserRequest): RIO[UserRepo, UUID] =
+  def createUser(userRequest: List[UserRequest]): RIO[UserRepo, List[UUID]] =
     for {
       service <- ZIO.service[UserRepo]
       result  <- service.createUser(userRequest)
     } yield result
-
 }

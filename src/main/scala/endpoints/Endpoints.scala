@@ -15,8 +15,8 @@ object Endpoints {
 
   private val createUserAPI =
     Endpoint(RoutePattern.POST / "api" / "create" / "user")
-      .in[UserRequest]
-      .out[UUID](Status.Created)
+      .in[List[UserRequest]]
+      .out[List[UUID]](Status.Created)
       .outError[InternalDatabaseException](Status.InternalServerError)
 
   private val createUserRoute = {

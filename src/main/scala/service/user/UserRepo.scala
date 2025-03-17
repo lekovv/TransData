@@ -9,7 +9,7 @@ import java.util.UUID
 @accessible
 trait UserRepo {
 
-  def createUser(userRequest: UserRequest): Task[UUID]
+  def createUser(usersRequest: List[UserRequest]): Task[List[UUID]]
 }
 
 object UserRepo {
