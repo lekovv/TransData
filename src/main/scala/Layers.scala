@@ -1,4 +1,6 @@
+import auth.AuthLive
 import config.ConfigApp
+import service.admin.AdminRepo
 import service.spark.{Spark, SparkLive}
 import service.transaction.TransactionRepo
 import service.user.UserRepo
@@ -32,6 +34,8 @@ object Layers {
       base >+>
       client >+>
       server >+>
+      AdminRepo.live >+>
+      AuthLive.layer >+>
       UserRepo.live >+>
       TransactionRepo.live >+>
       Spark.live >+>

@@ -3,8 +3,7 @@ package exception
 import zio.schema.{DeriveSchema, Schema}
 
 object Exceptions {
-
-  case class MetricNotFoundException(message: String) extends Exception(message)
+  case class ResourceNotFoundException(message: String) extends Exception(message)
 
   case class InternalDatabaseException(message: String) extends Exception(message)
 
@@ -12,8 +11,8 @@ object Exceptions {
 
   case class SparkCalculateException(message: String) extends Exception(message)
 
-  object MetricNotFoundException {
-    implicit val schema: Schema[MetricNotFoundException] = DeriveSchema.gen
+  object ResourceNotFoundException {
+    implicit val schema: Schema[ResourceNotFoundException] = DeriveSchema.gen
   }
 
   object InternalDatabaseException {

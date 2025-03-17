@@ -1,10 +1,19 @@
 package endpoints
 
-import exception.Exceptions.{InternalDatabaseException, MetricNotFoundException}
-import models.{AmountModel, CountryStatsModel, TopUsersModel, TransactionsRequest, UserRequest}
+import auth.AuthLive
+import auth.AuthService.authentication
+import exception.AuthError
+import exception.AuthError.{AdminNotFoundException, InternalException, PasswordMismatchException}
+import exception.Exceptions.{InternalDatabaseException, ResourceNotFoundException}
+import models._
+import service.admin.AdminRepo
+import service.spark.SparkLive
 import service.spark.SparkService.{getAmountMetric, getCountryStats, getTopUsers}
+import service.transaction.TransactionRepo
 import service.transaction.TransactionService.createTransactions
+import service.user.UserRepo
 import service.user.UserService._
+import zio.http.codec.HttpCodec
 import zio.http.endpoint.Endpoint
 import zio.http.{RoutePattern, Routes, Status}
 import zio.schema.DeriveSchema.gen
@@ -19,68 +28,64 @@ object Endpoints {
       .out[List[UUID]](Status.Created)
       .outError[InternalDatabaseException](Status.InternalServerError)
 
-  private val createUserRoute = {
-    createUserAPI.implement(req =>
-      createUser(req).mapBoth(
-        err => InternalDatabaseException(err.getMessage),
-        id => id
-      )
-    )
-  }
-
   private val createTransactionsAPI =
     Endpoint(RoutePattern.POST / "api" / "create" / "transactions")
       .in[List[TransactionsRequest]]
       .out[List[UUID]]
       .outError[InternalDatabaseException](Status.InternalServerError)
 
-  private val createTransactionsRoute =
+  private val getAmountMetricAPI =
+    Endpoint(RoutePattern.GET / "api" / "spark" / "amount")
+      .out[AmountModel]
+      .outError[ResourceNotFoundException](Status.NotFound)
+
+  private val getTopUsersMetricAPI =
+    Endpoint(RoutePattern.GET / "api" / "spark" / "top-users")
+      .out[TopUsersModel]
+      .outError[ResourceNotFoundException](Status.NotFound)
+
+  private val getCountryStatsAPI =
+    Endpoint(RoutePattern.GET / "api" / "spark" / "country-stats")
+      .out[CountryStatsModel]
+      .outError[ResourceNotFoundException](Status.NotFound)
+
+  private val loginAPI =
+    Endpoint(RoutePattern.POST / "login")
+      .in[Login]
+      .out[String]
+      .outErrors[AuthError](
+        HttpCodec.error[InternalException](Status.Unauthorized),
+        HttpCodec.error[AdminNotFoundException](Status.Unauthorized),
+        HttpCodec.error[PasswordMismatchException](Status.Unauthorized)
+      )
+
+  val routes: Routes[UserRepo with TransactionRepo with SparkLive with AuthLive with AdminRepo, Nothing] = Routes(
+    createUserAPI.implement(req =>
+      createUser(req).mapBoth(
+        err => InternalDatabaseException(err.getMessage),
+        id => id
+      )
+    ),
     createTransactionsAPI.implement(req =>
       createTransactions(req).mapBoth(
         err => InternalDatabaseException(err.getMessage),
         id => id
       )
-    )
-
-  private val getAmountMetricAPI =
-    Endpoint(RoutePattern.GET / "api" / "spark" / "amount")
-      .out[AmountModel]
-      .outError[MetricNotFoundException](Status.NotFound)
-
-  private val getAmountMetricRoute =
+    ),
     getAmountMetricAPI.implement(_ =>
       getAmountMetric
-        .mapError(err => MetricNotFoundException(err.getMessage))
-    )
-
-  private val getTopUsersMetricAPI =
-    Endpoint(RoutePattern.GET / "api" / "spark" / "top-users")
-      .out[TopUsersModel]
-      .outError[MetricNotFoundException](Status.NotFound)
-
-  private val getTopUsersMetricRoute =
+        .mapError(err => ResourceNotFoundException(err.getMessage))
+    ),
     getTopUsersMetricAPI.implement(_ =>
       getTopUsers
-        .mapError(err => MetricNotFoundException(err.getMessage))
-    )
-
-  private val getCountryStatsAPI =
-    Endpoint(RoutePattern.GET / "api" / "spark" / "country-stats")
-      .out[CountryStatsModel]
-      .outError[MetricNotFoundException](Status.NotFound)
-
-  private val getCountryStatsRoute =
+        .mapError(err => ResourceNotFoundException(err.getMessage))
+    ),
     getCountryStatsAPI.implement(_ =>
       getCountryStats
-        .mapError(err => MetricNotFoundException(err.getMessage))
-    )
-
-  val routes =
-    Routes(
-      createUserRoute,
-      createTransactionsRoute,
-      getAmountMetricRoute,
-      getTopUsersMetricRoute,
-      getCountryStatsRoute
-    )
+        .mapError(err => ResourceNotFoundException(err.getMessage))
+    ),
+    loginAPI.implement { login =>
+      authentication(login)
+    }
+  )
 }

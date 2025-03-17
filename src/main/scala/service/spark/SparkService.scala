@@ -1,6 +1,6 @@
 package service.spark
 
-import exception.Exceptions.MetricNotFoundException
+import exception.Exceptions.ResourceNotFoundException
 import models.{AmountModel, CountryStatsModel, TopUsersModel}
 import zio.{RIO, ZIO}
 
@@ -19,7 +19,7 @@ object SparkService {
           ZIO.succeed(AmountModel(totalAmount, avgAmount))
 
         case None =>
-          ZIO.fail(MetricNotFoundException("metric amount not found"))
+          ZIO.fail(ResourceNotFoundException("metric amount not found"))
       }
     } yield result
   }
@@ -44,7 +44,7 @@ object SparkService {
           )
 
         case None =>
-          ZIO.fail(MetricNotFoundException("metric top_users not found"))
+          ZIO.fail(ResourceNotFoundException("metric top_users not found"))
       }
     } yield result
   }
@@ -69,7 +69,7 @@ object SparkService {
           )
 
         case None =>
-          ZIO.fail(MetricNotFoundException("metric country_stats not found"))
+          ZIO.fail(ResourceNotFoundException("metric country_stats not found"))
       }
     } yield result
   }

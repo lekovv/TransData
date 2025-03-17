@@ -16,6 +16,7 @@ object Dependencies {
     val spark        = "3.5.5"
     val quill        = "4.8.3"
     val postgre      = "42.7.3"
+    val jwt          = "9.4.0"
   }
 
   object ZIO {
@@ -25,9 +26,9 @@ object Dependencies {
   }
 
   object CIRCE {
-    lazy val core    = "io.circe" %% "circe-core"        % Version.circe
-    lazy val generic = "io.circe" %% "circe-generic"     % Version.circe
-    lazy val parse   = "io.circe" %% "circe-parser"      % Version.circe
+    lazy val core    = "io.circe" %% "circe-core"    % Version.circe
+    lazy val generic = "io.circe" %% "circe-generic" % Version.circe
+    lazy val parse   = "io.circe" %% "circe-parser"  % Version.circe
   }
 
   object LOGS {
@@ -63,6 +64,10 @@ object Dependencies {
     lazy val postgre = "org.postgresql" % "postgresql"     % Version.postgre
   }
 
+  object AUTH {
+    lazy val jwt = "com.github.jwt-scala" %% "jwt-zio-json" % Version.jwt
+  }
+
   lazy val globalProjectDependencies = Seq(
     ZIO.core,
     ZIO.macros,
@@ -84,6 +89,7 @@ object Dependencies {
     CONFIG.magnolia,
     CONFIG.core,
     STORAGE.quill,
-    STORAGE.postgre
+    STORAGE.postgre,
+    AUTH.jwt
   )
 }
