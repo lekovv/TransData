@@ -31,7 +31,6 @@ final case class TransactionRepoLive(ds: DataSource) extends TransactionRepo {
         id,
         transactionsRequest.userId,
         transactionsRequest.amount,
-        transactionsRequest.currency,
         transactionsRequest.transactionType,
         transactionsRequest.description,
         created

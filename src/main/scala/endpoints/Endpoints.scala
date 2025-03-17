@@ -1,7 +1,8 @@
 package endpoints
 
-import exception.Exceptions.InternalDatabaseException
-import models.{TransactionsRequest, UserRequest}
+import exception.Exceptions.{InternalDatabaseException, MetricNotFoundException}
+import models.{AmountModel, CountryStatsModel, TopUsersModel, TransactionsRequest, UserRequest}
+import service.spark.SparkService.{getAmountMetric, getCountryStats, getTopUsers}
 import service.transaction.TransactionService.createTransactions
 import service.user.UserService._
 import zio.http.endpoint.Endpoint
@@ -41,9 +42,45 @@ object Endpoints {
       )
     )
 
+  private val getAmountMetricAPI =
+    Endpoint(RoutePattern.GET / "api" / "spark" / "amount")
+      .out[AmountModel]
+      .outError[MetricNotFoundException](Status.NotFound)
+
+  private val getAmountMetricRoute =
+    getAmountMetricAPI.implement(_ =>
+      getAmountMetric
+        .mapError(err => MetricNotFoundException(err.getMessage))
+    )
+
+  private val getTopUsersMetricAPI =
+    Endpoint(RoutePattern.GET / "api" / "spark" / "top-users")
+      .out[TopUsersModel]
+      .outError[MetricNotFoundException](Status.NotFound)
+
+  private val getTopUsersMetricRoute =
+    getTopUsersMetricAPI.implement(_ =>
+      getTopUsers
+        .mapError(err => MetricNotFoundException(err.getMessage))
+    )
+
+  private val getCountryStatsAPI =
+    Endpoint(RoutePattern.GET / "api" / "spark" / "country-stats")
+      .out[CountryStatsModel]
+      .outError[MetricNotFoundException](Status.NotFound)
+
+  private val getCountryStatsRoute =
+    getCountryStatsAPI.implement(_ =>
+      getCountryStats
+        .mapError(err => MetricNotFoundException(err.getMessage))
+    )
+
   val routes =
     Routes(
       createUserRoute,
-      createTransactionsRoute
+      createTransactionsRoute,
+      getAmountMetricRoute,
+      getTopUsersMetricRoute,
+      getCountryStatsRoute
     )
 }

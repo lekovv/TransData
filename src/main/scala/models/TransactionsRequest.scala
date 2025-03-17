@@ -8,7 +8,6 @@ import java.util.UUID
 case class TransactionsRequest(
     userId: UUID,
     amount: BigDecimal,
-    currency: String,
     transactionType: String,
     description: Option[String]
 )

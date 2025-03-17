@@ -1,5 +1,5 @@
 import endpoints.{Endpoints, Health}
-import service.spark.SparkServiceLive
+import service.spark.SparkLive
 import zio.Console.printLine
 import zio.Runtime.setConfigProvider
 import zio._
@@ -23,7 +23,7 @@ object Main extends ZIOAppDefault {
     for {
       _     <- ZIO.logInfo("Server is running")
       http  <- startServer.exitCode.fork
-      spark <- ZIO.serviceWithZIO[SparkServiceLive](_.analyzeData()).fork
+      spark <- ZIO.serviceWithZIO[SparkLive](_.analyzeData()).fork
       code  <- http.join *> spark.join
     } yield code
 

@@ -10,7 +10,6 @@ case class TransactionsModel(
     id: UUID,
     userId: UUID,
     amount: BigDecimal,
-    currency: String,
     transactionType: String,
     description: Option[String],
     created: LocalDateTime
