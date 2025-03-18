@@ -23,4 +23,16 @@ object AuthError {
   object InternalException {
     implicit val schema: Schema[InternalException] = DeriveSchema.gen
   }
+
+  case class ClaimMissing() extends AuthError
+
+  object ClaimMissing {
+    implicit val schema: Schema[ClaimMissing] = DeriveSchema.gen
+  }
+
+  case class InvalidToken() extends AuthError
+
+  object InvalidToken {
+    implicit val schema: Schema[ClaimMissing] = DeriveSchema.gen
+  }
 }

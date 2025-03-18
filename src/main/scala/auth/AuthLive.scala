@@ -1,25 +1,27 @@
 package auth
 
-import auth.AuthLive.{SECRET_TOKEN, checkPassword, jwtEncode}
+import auth.AuthLive.{checkPassword, jwtEncode, SECRET_TOKEN}
 import exception.AuthError
-import exception.AuthError.{AdminNotFoundException, InternalException, PasswordMismatchException}
+import exception.AuthError._
 import io.circe.syntax.EncoderOps
 import models.{Admin, JwtClaimData, Login}
 import pdi.jwt.{JwtAlgorithm, JwtClaim, JwtZIOJson}
 import service.admin.AdminRepo
-import service.admin.AdminService.getAdmin
-import zio.{ZIO, ZLayer}
+import zio.http.{Handler, HandlerAspect, Header, Headers, Request, Response}
+import zio.{IO, ZIO, ZLayer}
 
+import java.sql.SQLException
 import java.time.Instant
 import java.util.UUID
 import scala.util.Try
 
 final case class AuthLive(admin: AdminRepo) {
 
-  def authentication(login: Login): ZIO[AdminRepo, AuthError, String] = {
+  def authentication(login: Login): IO[AuthError, String] = {
     for {
-      admin <- getAdmin(login.username)
-        .mapError(err => InternalException(err.getMessage))
+      admin <- admin
+        .getAdmin(login.username)
+        .mapError { _: SQLException => InternalException("database error") }
       jwt <- admin match {
         case Some(admin) =>
           if (checkPassword(admin, login.password)) {
@@ -30,10 +32,14 @@ final case class AuthLive(admin: AdminRepo) {
 
         case None => ZIO.fail(AdminNotFoundException("admin not found"))
       }
-
     } yield jwt
   }
 
+//  def processJwt(token: String): ZIO[Any, AuthError, Unit] =
+//    for {
+//      claim <- ZIO.fromTry(jwtDecode(token, SECRET_TOKEN)).orElseFail(InvalidToken())
+//      _     <- ZIO.fromOption(claim.subject).orElseFail(ClaimMissing())
+//    } yield ()
 }
 
 object AuthLive {
@@ -41,10 +47,33 @@ object AuthLive {
   val SECRET_TOKEN     = "secret_token"
   private val TWO_DAYS = 172800
 
-  def checkPassword(admin: Admin, password: String): Boolean =
+  val bearerAuthMiddleware: HandlerAspect[Any, String] =
+    HandlerAspect.interceptIncomingHandler(Handler.fromFunctionZIO[Request] { req =>
+      req.header(Header.Authorization) match {
+        case Some(Header.Authorization.Bearer(token)) =>
+          ZIO
+            .fromTry(jwtDecode(token.value.asString, SECRET_TOKEN))
+            .mapError(_ => InvalidToken)
+            .flatMap(claim =>
+              ZIO
+                .fromOption(claim.subject)
+                .mapError(_ => ClaimMissing)
+            )
+            .either
+            .flatMap {
+              case Right(user)        => ZIO.succeed((req, user))
+              case Left(InvalidToken) => ZIO.fail(Response.unauthorized("invalid token"))
+              case Left(ClaimMissing) => ZIO.fail(Response.unauthorized("subject claim mismatch"))
+            }
+        case _ =>
+          ZIO.fail(Response.unauthorized.addHeaders(Headers(Header.WWWAuthenticate.Bearer(realm = "Access"))))
+      }
+    })
+
+  private def checkPassword(admin: Admin, password: String): Boolean =
     admin.password == password
 
-  def jwtEncode(id: UUID, username: String, key: String): String =
+  private def jwtEncode(id: UUID, username: String, key: String): String =
     JwtZIOJson.encode(
       JwtClaim(
         expiration = Some(Instant.now.plusSeconds(TWO_DAYS).getEpochSecond),
@@ -55,7 +84,7 @@ object AuthLive {
       JwtAlgorithm.HS256
     )
 
-  def jwtDecode(token: String, key: String): Try[JwtClaim] =
+  private def jwtDecode(token: String, key: String): Try[JwtClaim] =
     JwtZIOJson.decode(token, key, Seq(JwtAlgorithm.HS256))
 
   val layer = ZLayer.fromZIO {

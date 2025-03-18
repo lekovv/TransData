@@ -1,6 +1,7 @@
 package endpoints
 
 import auth.AuthLive
+import auth.AuthLive.bearerAuthMiddleware
 import auth.AuthService.authentication
 import exception.AuthError
 import exception.AuthError.{AdminNotFoundException, InternalException, PasswordMismatchException}
@@ -59,6 +60,12 @@ object Endpoints {
         HttpCodec.error[PasswordMismatchException](Status.Unauthorized)
       )
 
+  val loginRoute: Routes[AdminRepo with AuthLive, Nothing] = Routes(
+    loginAPI.implement { login =>
+      authentication(login)
+    }
+  )
+
   val routes: Routes[UserRepo with TransactionRepo with SparkLive with AuthLive with AdminRepo, Nothing] = Routes(
     createUserAPI.implement(req =>
       createUser(req).mapBoth(
@@ -83,9 +90,7 @@ object Endpoints {
     getCountryStatsAPI.implement(_ =>
       getCountryStats
         .mapError(err => ResourceNotFoundException(err.getMessage))
-    ),
-    loginAPI.implement { login =>
-      authentication(login)
-    }
-  )
+    )
+    //TODO: настроить авторизацию через валидацию заголовка
+  ) @@ bearerAuthMiddleware
 }

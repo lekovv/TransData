@@ -1,8 +1,9 @@
 package service.admin
 import io.getquill.{PostgresZioJdbcContext, SnakeCase}
 import models.Admin
-import zio.{Task, ZIO, ZLayer}
+import zio.{IO, Task, ZIO, ZLayer}
 
+import java.sql.SQLException
 import javax.sql.DataSource
 
 case class AdminRepoLive(ds: DataSource) extends AdminRepo {
@@ -17,7 +18,7 @@ case class AdminRepoLive(ds: DataSource) extends AdminRepo {
     querySchema[Admin]("public.admin")
   }
 
-  override def getAdmin(username: String): Task[Option[Admin]] = {
+  override def getAdmin(username: String): IO[SQLException, Option[Admin]] = {
 
     ctx
       .run(adminSchema.filter(_.username == lift(username)))

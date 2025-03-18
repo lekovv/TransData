@@ -1,4 +1,4 @@
-import endpoints.{Endpoints, Health}
+import endpoints.Endpoints
 import service.spark.SparkLive
 import zio.Console.printLine
 import zio.Runtime.setConfigProvider
@@ -15,7 +15,7 @@ object Main extends ZIOAppDefault {
           .fromResourcePath()
       )
 
-  private val allRoutes = Health.routes ++ Endpoints.routes
+  private val allRoutes = Endpoints.routes ++ Endpoints.loginRoute
 
   private def startServer = Server.serve(allRoutes)
 
