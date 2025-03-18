@@ -1,10 +1,11 @@
 package service.spark
 import config.ConfigApp
-import exception.Exceptions.{SparkCalculateException, SparkReadException}
+import exception.SparkError
+import exception.SparkError.{SparkCalculateException, SparkReadException, SparkSaveException}
 import models.Metric
 import org.apache.spark.sql.DataFrame
 import org.apache.spark.sql.functions._
-import zio.{Task, ZIO, ZLayer}
+import zio.{IO, URLayer, ZIO, ZLayer}
 
 case class SparkLive(
     spark: Spark,
@@ -13,7 +14,7 @@ case class SparkLive(
     password: String
 ) {
 
-  private def readTransactions(): Task[DataFrame] = ZIO
+  private def readTransactions(): IO[SparkError, DataFrame] = ZIO
     .attempt {
 
       spark.session.read
@@ -27,7 +28,7 @@ case class SparkLive(
     }
     .mapError(err => SparkReadException(s"failed to read transactions ${err.getMessage}"))
 
-  private def readUsers(): Task[DataFrame] = ZIO
+  private def readUsers(): IO[SparkError, DataFrame] = ZIO
     .attempt {
 
       spark.session.read
@@ -41,7 +42,7 @@ case class SparkLive(
     }
     .mapError(err => SparkReadException(s"failed to read users ${err.getMessage}"))
 
-  private def calculateMetrics(dfTrans: DataFrame, dfUsers: DataFrame): Task[List[Metric]] = ZIO
+  private def calculateMetrics(dfTrans: DataFrame, dfUsers: DataFrame): IO[SparkError, List[Metric]] = ZIO
     .attempt {
 
       val transDF = dfTrans.alias("trans")
@@ -84,24 +85,26 @@ case class SparkLive(
     }
     .mapError(err => SparkCalculateException(s"failed to calculate metric ${err.getMessage}"))
 
-  private def saveMetrics(metrics: List[Metric]): Task[Unit] = ZIO.attempt {
+  private def saveMetrics(metrics: List[Metric]): IO[SparkError, List[Unit]] = ZIO
+    .attempt {
 
-    metrics.map { metric =>
-      metric.df
-        .withColumn("created", current_date())
-        .write
-        .format("jdbc")
-        .option("url", url)
-        .option("driver", "org.postgresql.Driver")
-        .option("dbtable", s"public.${metric.name}")
-        .option("user", user)
-        .option("password", password)
-        .mode("append")
-        .save()
+      metrics.map { metric =>
+        metric.df
+          .withColumn("created", current_date())
+          .write
+          .format("jdbc")
+          .option("url", url)
+          .option("driver", "org.postgresql.Driver")
+          .option("dbtable", s"public.${metric.name}")
+          .option("user", user)
+          .option("password", password)
+          .mode("append")
+          .save()
+      }
     }
-  }
+    .mapError(err => SparkSaveException(s"failed to calculate metric ${err.getMessage}"))
 
-  def analyzeData(): Task[Unit] = {
+  def analyzeData(): IO[SparkError, Unit] = {
     for {
       transactions <- readTransactions()
       users        <- readUsers()
@@ -111,7 +114,7 @@ case class SparkLive(
     } yield ()
   }
 
-  def sendData(): Task[List[Metric]] = {
+  def sendData(): IO[SparkError, List[Metric]] = {
     for {
       transactions <- readTransactions()
       users        <- readUsers()
@@ -122,7 +125,7 @@ case class SparkLive(
 
 object SparkLive {
 
-  val layer: ZLayer[ConfigApp with Spark, Nothing, SparkLive] = ZLayer.fromZIO {
+  val layer: URLayer[ConfigApp with Spark, SparkLive] = ZLayer.fromZIO {
     for {
       spark  <- ZIO.service[Spark]
       config <- ZIO.service[ConfigApp]

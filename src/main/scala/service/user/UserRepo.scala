@@ -1,17 +1,19 @@
 package service.user
 
+import exception.Exceptions.InternalDatabaseException
 import models.UserRequest
-import zio.Task
 import zio.macros.accessible
+import zio.{IO, URLayer}
 
 import java.util.UUID
+import javax.sql.DataSource
 
 @accessible
 trait UserRepo {
 
-  def createUser(usersRequest: List[UserRequest]): Task[List[UUID]]
+  def createUser(usersRequest: List[UserRequest]): IO[InternalDatabaseException, List[UUID]]
 }
 
 object UserRepo {
-  val live = UserRepoLive.layer
+  val live: URLayer[DataSource, UserRepoLive] = UserRepoLive.layer
 }

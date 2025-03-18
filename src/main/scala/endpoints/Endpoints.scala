@@ -3,9 +3,10 @@ package endpoints
 import auth.AuthLive
 import auth.AuthLive.bearerAuthMiddleware
 import auth.AuthService.authentication
-import exception.AuthError
 import exception.AuthError.{AdminNotFoundException, InternalException, PasswordMismatchException}
-import exception.Exceptions.{InternalDatabaseException, ResourceNotFoundException}
+import exception.Exceptions.InternalDatabaseException
+import exception.SparkError.{MetricNotFoundException, SparkCalculateException, SparkReadException, SparkSaveException}
+import exception.{AuthError, SparkError}
 import models._
 import service.admin.AdminRepo
 import service.spark.SparkLive
@@ -24,7 +25,7 @@ import java.util.UUID
 object Endpoints {
 
   private val createUserAPI =
-    Endpoint(RoutePattern.POST / "api" / "create" / "user")
+    Endpoint(RoutePattern.POST / "api" / "create" / "users")
       .in[List[UserRequest]]
       .out[List[UUID]](Status.Created)
       .outError[InternalDatabaseException](Status.InternalServerError)
@@ -38,17 +39,32 @@ object Endpoints {
   private val getAmountMetricAPI =
     Endpoint(RoutePattern.GET / "api" / "spark" / "amount")
       .out[AmountModel]
-      .outError[ResourceNotFoundException](Status.NotFound)
+      .outErrors[SparkError](
+        HttpCodec.error[SparkReadException](Status.InternalServerError),
+        HttpCodec.error[SparkCalculateException](Status.InternalServerError),
+        HttpCodec.error[SparkSaveException](Status.InternalServerError),
+        HttpCodec.error[MetricNotFoundException](Status.NotFound)
+      )
 
   private val getTopUsersMetricAPI =
     Endpoint(RoutePattern.GET / "api" / "spark" / "top-users")
       .out[TopUsersModel]
-      .outError[ResourceNotFoundException](Status.NotFound)
+      .outErrors[SparkError](
+        HttpCodec.error[SparkReadException](Status.InternalServerError),
+        HttpCodec.error[SparkCalculateException](Status.InternalServerError),
+        HttpCodec.error[SparkSaveException](Status.InternalServerError),
+        HttpCodec.error[MetricNotFoundException](Status.NotFound)
+      )
 
   private val getCountryStatsAPI =
     Endpoint(RoutePattern.GET / "api" / "spark" / "country-stats")
       .out[CountryStatsModel]
-      .outError[ResourceNotFoundException](Status.NotFound)
+      .outErrors[SparkError](
+        HttpCodec.error[SparkReadException](Status.InternalServerError),
+        HttpCodec.error[SparkCalculateException](Status.InternalServerError),
+        HttpCodec.error[SparkSaveException](Status.InternalServerError),
+        HttpCodec.error[MetricNotFoundException](Status.NotFound)
+      )
 
   private val loginAPI =
     Endpoint(RoutePattern.POST / "login")
@@ -67,30 +83,11 @@ object Endpoints {
   )
 
   val routes: Routes[UserRepo with TransactionRepo with SparkLive with AuthLive with AdminRepo, Nothing] = Routes(
-    createUserAPI.implement(req =>
-      createUser(req).mapBoth(
-        err => InternalDatabaseException(err.getMessage),
-        id => id
-      )
-    ),
-    createTransactionsAPI.implement(req =>
-      createTransactions(req).mapBoth(
-        err => InternalDatabaseException(err.getMessage),
-        id => id
-      )
-    ),
-    getAmountMetricAPI.implement(_ =>
-      getAmountMetric
-        .mapError(err => ResourceNotFoundException(err.getMessage))
-    ),
-    getTopUsersMetricAPI.implement(_ =>
-      getTopUsers
-        .mapError(err => ResourceNotFoundException(err.getMessage))
-    ),
-    getCountryStatsAPI.implement(_ =>
-      getCountryStats
-        .mapError(err => ResourceNotFoundException(err.getMessage))
-    )
-    //TODO: настроить авторизацию через валидацию заголовка
+    createUserAPI.implement(req => createUser(req)),
+    createTransactionsAPI.implement(req => createTransactions(req)),
+    getAmountMetricAPI.implement(_ => getAmountMetric),
+    getTopUsersMetricAPI.implement(_ => getTopUsers),
+    getCountryStatsAPI.implement(_ => getCountryStats)
+    // TODO: настроить авторизацию через валидацию заголовка
   ) @@ bearerAuthMiddleware
 }

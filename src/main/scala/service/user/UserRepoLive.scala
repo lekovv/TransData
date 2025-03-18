@@ -3,7 +3,7 @@ package service.user
 import exception.Exceptions.InternalDatabaseException
 import io.getquill.{PostgresZioJdbcContext, SnakeCase}
 import models.{UserModel, UserRequest}
-import zio.{Task, ZIO, ZLayer}
+import zio.{IO, URLayer, ZIO, ZLayer}
 
 import java.time.LocalDateTime
 import java.util.UUID
@@ -21,7 +21,7 @@ final case class UserRepoLive(ds: DataSource) extends UserRepo {
     querySchema[UserModel]("public.user")
   }
 
-  override def createUser(usersRequest: List[UserRequest]): Task[List[UUID]] = {
+  override def createUser(usersRequest: List[UserRequest]): IO[InternalDatabaseException, List[UUID]] = {
 
     val userInserts = usersRequest.map(userRequest => {
       val id      = UUID.randomUUID()
@@ -49,7 +49,7 @@ final case class UserRepoLive(ds: DataSource) extends UserRepo {
 }
 
 object UserRepoLive {
-  val layer = ZLayer.fromZIO {
+  val layer: URLayer[DataSource, UserRepoLive] = ZLayer.fromZIO {
     for {
       ds <- ZIO.service[DataSource]
     } yield UserRepoLive(ds)

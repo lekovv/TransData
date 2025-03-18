@@ -1,13 +1,14 @@
 package service.transaction
 
+import exception.Exceptions.InternalDatabaseException
 import models.TransactionsRequest
-import zio.{RIO, ZIO}
+import zio.ZIO
 
 import java.util.UUID
 
 object TransactionService {
 
-  def createTransactions(transactionsRequest: List[TransactionsRequest]): RIO[TransactionRepo, List[UUID]] =
+  def createTransactions(transactionsRequest: List[TransactionsRequest]): ZIO[TransactionRepo, InternalDatabaseException, List[UUID]] =
     for {
       service <- ZIO.service[TransactionRepo]
       result  <- service.createTransactions(transactionsRequest)

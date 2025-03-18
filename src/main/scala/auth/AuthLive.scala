@@ -10,7 +10,6 @@ import service.admin.AdminRepo
 import zio.http.{Handler, HandlerAspect, Header, Headers, Request, Response}
 import zio.{IO, ZIO, ZLayer}
 
-import java.sql.SQLException
 import java.time.Instant
 import java.util.UUID
 import scala.util.Try
@@ -19,9 +18,7 @@ final case class AuthLive(admin: AdminRepo) {
 
   def authentication(login: Login): IO[AuthError, String] = {
     for {
-      admin <- admin
-        .getAdmin(login.username)
-        .mapError { _: SQLException => InternalException("database error") }
+      admin <- admin.getAdmin(login.username)
       jwt <- admin match {
         case Some(admin) =>
           if (checkPassword(admin, login.password)) {
@@ -29,7 +26,6 @@ final case class AuthLive(admin: AdminRepo) {
           } else {
             ZIO.fail(PasswordMismatchException("password mismatch"))
           }
-
         case None => ZIO.fail(AdminNotFoundException("admin not found"))
       }
     } yield jwt

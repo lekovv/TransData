@@ -3,7 +3,7 @@ package service.transaction
 import exception.Exceptions.InternalDatabaseException
 import io.getquill.{PostgresZioJdbcContext, SnakeCase}
 import models.{TransactionsModel, TransactionsRequest}
-import zio.{Task, ZIO, ZLayer}
+import zio.{IO, URLayer, ZIO, ZLayer}
 
 import java.time.LocalDateTime
 import java.util.UUID
@@ -21,7 +21,7 @@ final case class TransactionRepoLive(ds: DataSource) extends TransactionRepo {
     querySchema[TransactionsModel]("public.transaction")
   }
 
-  override def createTransactions(transactionsRequest: List[TransactionsRequest]): Task[List[UUID]] = {
+  override def createTransactions(transactionsRequest: List[TransactionsRequest]): IO[InternalDatabaseException, List[UUID]] = {
 
     val transactionInserts = transactionsRequest.map(transactionRequest => {
       val id      = UUID.randomUUID()
@@ -49,7 +49,7 @@ final case class TransactionRepoLive(ds: DataSource) extends TransactionRepo {
 }
 
 object TransactionRepoLive {
-  val layer = ZLayer.fromZIO {
+  val layer: URLayer[DataSource, TransactionRepoLive] = ZLayer.fromZIO {
     for {
       ds <- ZIO.service[DataSource]
     } yield TransactionRepoLive(ds)

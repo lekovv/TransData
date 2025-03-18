@@ -1,8 +1,8 @@
 import io.getquill.jdbczio.Quill
-import zio.ZLayer
+import zio.TaskLayer
 
 import javax.sql.DataSource
 
 object DBContext {
-  val live: ZLayer[Any, Throwable, DataSource] = Quill.DataSource.fromPrefix("database")
+  val live: TaskLayer[DataSource] = Quill.DataSource.fromPrefix("database")
 }

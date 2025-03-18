@@ -6,31 +6,31 @@ sealed trait AuthError
 
 object AuthError {
 
-  final case class PasswordMismatchException(message: String) extends AuthError
+  case class PasswordMismatchException(message: String) extends AuthError
 
-  object PasswordMismatchException {
-    implicit val schema: Schema[PasswordMismatchException] = DeriveSchema.gen
-  }
+  case class AdminNotFoundException(message: String) extends AuthError
 
-  final case class AdminNotFoundException(message: String) extends AuthError
-
-  object AdminNotFoundException {
-    implicit val schema: Schema[AdminNotFoundException] = DeriveSchema.gen
-  }
-
-  final case class InternalException(message: String) extends AuthError
-
-  object InternalException {
-    implicit val schema: Schema[InternalException] = DeriveSchema.gen
-  }
+  case class InternalException(message: String) extends AuthError
 
   case class ClaimMissing() extends AuthError
+
+  case class InvalidToken() extends AuthError
 
   object ClaimMissing {
     implicit val schema: Schema[ClaimMissing] = DeriveSchema.gen
   }
 
-  case class InvalidToken() extends AuthError
+  object InternalException {
+    implicit val schema: Schema[InternalException] = DeriveSchema.gen
+  }
+
+  object AdminNotFoundException {
+    implicit val schema: Schema[AdminNotFoundException] = DeriveSchema.gen
+  }
+
+  object PasswordMismatchException {
+    implicit val schema: Schema[PasswordMismatchException] = DeriveSchema.gen
+  }
 
   object InvalidToken {
     implicit val schema: Schema[ClaimMissing] = DeriveSchema.gen

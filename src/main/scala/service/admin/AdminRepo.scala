@@ -1,17 +1,18 @@
 package service.admin
 
+import exception.AuthError
 import models.Admin
-import zio.IO
 import zio.macros.accessible
+import zio.{IO, URLayer}
 
-import java.sql.SQLException
+import javax.sql.DataSource
 
 @accessible
 trait AdminRepo {
 
-  def getAdmin(username: String): IO[SQLException, Option[Admin]]
+  def getAdmin(username: String): IO[AuthError, Option[Admin]]
 }
 
 object AdminRepo {
-  val live = AdminRepoLive.layer
+  val live: URLayer[DataSource, AdminRepoLive] = AdminRepoLive.layer
 }

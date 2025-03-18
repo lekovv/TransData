@@ -1,12 +1,13 @@
 package service.spark
 
-import exception.Exceptions.ResourceNotFoundException
+import exception.SparkError
+import exception.SparkError.MetricNotFoundException
 import models.{AmountModel, CountryStatsModel, TopUsersModel}
-import zio.{RIO, ZIO}
+import zio.ZIO
 
 object SparkService {
 
-  def getAmountMetric: RIO[SparkLive, AmountModel] = {
+  def getAmountMetric: ZIO[SparkLive, SparkError, AmountModel] = {
     for {
       spark   <- ZIO.service[SparkLive]
       metrics <- spark.sendData()
@@ -19,12 +20,12 @@ object SparkService {
           ZIO.succeed(AmountModel(totalAmount, avgAmount))
 
         case None =>
-          ZIO.fail(ResourceNotFoundException("metric amount not found"))
+          ZIO.fail(MetricNotFoundException("metric amount not found"))
       }
     } yield result
   }
 
-  def getTopUsers: RIO[SparkLive, TopUsersModel] = {
+  def getTopUsers: ZIO[SparkLive, SparkError, TopUsersModel] = {
     for {
       spark   <- ZIO.service[SparkLive]
       metrics <- spark.sendData()
@@ -44,12 +45,12 @@ object SparkService {
           )
 
         case None =>
-          ZIO.fail(ResourceNotFoundException("metric top_users not found"))
+          ZIO.fail(MetricNotFoundException("metric top_users not found"))
       }
     } yield result
   }
 
-  def getCountryStats: RIO[SparkLive, CountryStatsModel] = {
+  def getCountryStats: ZIO[SparkLive, SparkError, CountryStatsModel] = {
     for {
       spark   <- ZIO.service[SparkLive]
       metrics <- spark.sendData()
@@ -69,7 +70,7 @@ object SparkService {
           )
 
         case None =>
-          ZIO.fail(ResourceNotFoundException("metric country_stats not found"))
+          ZIO.fail(MetricNotFoundException("metric country_stats not found"))
       }
     } yield result
   }
