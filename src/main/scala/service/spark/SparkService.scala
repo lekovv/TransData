@@ -14,8 +14,10 @@ object SparkService {
       amount = metrics.find(_.name == "amount")
       result <- amount match {
         case Some(value) =>
-          val totalAmount = value.df.select("total_amount").first().getDecimal(0)
-          val avgAmount   = value.df.select("avg_amount").first().getDecimal(0)
+          val amountRows = value.df.collect()
+
+          val totalAmount = amountRows(0).getDecimal(0)
+          val avgAmount   = amountRows(0).getDecimal(1)
 
           ZIO.succeed(AmountModel(totalAmount, avgAmount))
 
@@ -25,24 +27,26 @@ object SparkService {
     } yield result
   }
 
-  def getTopUsers: ZIO[SparkLive, AppError, TopUsersModel] = {
+  def getTopUsers: ZIO[SparkLive, AppError, List[TopUsersModel]] = {
     for {
       spark   <- ZIO.service[SparkLive]
       metrics <- spark.sendData()
       topUsers = metrics.find(_.name == "top_users")
       result <- topUsers match {
         case Some(value) =>
-          val fio             = value.df.select("fio").first().getString(0)
-          val email           = value.df.select("email").first().getString(0)
-          val totalUserAmount = value.df.select("total_user_amount").first().getDecimal(0)
+          val userRows = value.df.collect()
 
-          ZIO.succeed(
-            TopUsersModel(
-              fio,
-              email,
-              totalUserAmount
+          val users = userRows
+            .map(row =>
+              TopUsersModel(
+                row.getString(0),
+                row.getString(1),
+                row.getDecimal(2)
+              )
             )
-          )
+            .toList
+
+          ZIO.succeed(users)
 
         case None =>
           ZIO.fail(MetricNotFoundException("metric top_users not found"))
@@ -50,24 +54,26 @@ object SparkService {
     } yield result
   }
 
-  def getCountryStats: ZIO[SparkLive, AppError, CountryStatsModel] = {
+  def getCountryStats: ZIO[SparkLive, AppError, List[CountryStatsModel]] = {
     for {
       spark   <- ZIO.service[SparkLive]
       metrics <- spark.sendData()
       countryStats = metrics.find(_.name == "country_stats")
       result <- countryStats match {
         case Some(value) =>
-          val country          = value.df.select("country").first().getString(0)
-          val transactionCount = value.df.select("transaction_count").first().getLong(0)
-          val totalAmount      = value.df.select("total_amount").first().getDecimal(0)
+          val countryRows = value.df.collect()
 
-          ZIO.succeed(
-            CountryStatsModel(
-              country,
-              transactionCount,
-              totalAmount
+          val countries = countryRows
+            .map(row =>
+              CountryStatsModel(
+                row.getString(0),
+                row.getLong(1),
+                row.getDecimal(2)
+              )
             )
-          )
+            .toList
+
+          ZIO.succeed(countries)
 
         case None =>
           ZIO.fail(MetricNotFoundException("metric country_stats not found"))

@@ -3,10 +3,8 @@ package endpoints
 import auth.AuthLive
 import auth.AuthLive.bearerAuthMiddleware
 import auth.AuthService.authentication
-import exception.AppError.{AdminNotFoundException, InternalException, PasswordMismatchException}
-import exception.AppError.InternalDatabaseException
-import exception.AppError.{MetricNotFoundException, SparkCalculateException, SparkReadException, SparkSaveException}
 import exception.AppError
+import exception.AppError._
 import models._
 import service.admin.AdminRepo
 import service.spark.SparkLive
@@ -48,7 +46,7 @@ object Endpoints {
 
   private val getTopUsersMetricAPI =
     Endpoint(RoutePattern.GET / "api" / "spark" / "top-users")
-      .out[TopUsersModel]
+      .out[List[TopUsersModel]]
       .outErrors[AppError](
         HttpCodec.error[SparkReadException](Status.InternalServerError),
         HttpCodec.error[SparkCalculateException](Status.InternalServerError),
@@ -58,7 +56,7 @@ object Endpoints {
 
   private val getCountryStatsAPI =
     Endpoint(RoutePattern.GET / "api" / "spark" / "country-stats")
-      .out[CountryStatsModel]
+      .out[List[CountryStatsModel]]
       .outErrors[AppError](
         HttpCodec.error[SparkReadException](Status.InternalServerError),
         HttpCodec.error[SparkCalculateException](Status.InternalServerError),

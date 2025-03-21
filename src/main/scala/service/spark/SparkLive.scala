@@ -76,6 +76,7 @@ case class SparkLive(
           count("*").alias("transaction_count"),
           sum("trans.amount").alias("total_amount")
         )
+        .orderBy(col("total_amount").desc)
 
       List(
         Metric("amount", amount),
