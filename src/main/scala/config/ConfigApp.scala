@@ -15,16 +15,22 @@ case class Spark(
     password: String
 )
 
+case class Liquibase(
+    changeLog: String
+)
+
 case class ConfigApp(
     interface: Interface,
-    spark: Spark
+    spark: Spark,
+    liquibase: Liquibase
 )
 
 object ConfigApp {
 
   implicit val configDescriptor: Config[ConfigApp] = (
     deriveConfig[Interface].nested("interface") zip
-      deriveConfig[Spark].nested("sparkConfig")
+      deriveConfig[Spark].nested("sparkConfig") zip
+      deriveConfig[Liquibase].nested("liquibase")
   )
     .to[ConfigApp]
     .mapKey(toKebabCase)

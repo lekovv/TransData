@@ -1,4 +1,5 @@
 import endpoints.Endpoints
+import liquibase.LiquibaseService
 import scheduler.SchedulerLive
 import service.spark.SparkLive
 import zio.Console.printLine
@@ -22,6 +23,7 @@ object Main extends ZIOAppDefault {
 
   private val program =
     for {
+      _       <- ZIO.serviceWithZIO[LiquibaseService](_.performMigration)
       _       <- ZIO.logInfo("Server is running")
       http    <- startServer.exitCode.fork
       spark   <- ZIO.service[SparkLive]

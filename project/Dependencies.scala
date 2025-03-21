@@ -17,6 +17,7 @@ object Dependencies {
     val quill        = "4.8.3"
     val postgre      = "42.7.3"
     val jwt          = "9.4.0"
+    val liquibase    = "3.4.2"
   }
 
   object ZIO {
@@ -60,8 +61,9 @@ object Dependencies {
   }
 
   object STORAGE {
-    lazy val quill   = "io.getquill"   %% "quill-jdbc-zio" % Version.quill
-    lazy val postgre = "org.postgresql" % "postgresql"     % Version.postgre
+    lazy val quill     = "io.getquill"   %% "quill-jdbc-zio" % Version.quill
+    lazy val postgre   = "org.postgresql" % "postgresql"     % Version.postgre
+    lazy val liquibase = "org.liquibase"  % "liquibase-core" % Version.liquibase
   }
 
   object AUTH {
@@ -90,6 +92,7 @@ object Dependencies {
     CONFIG.core,
     STORAGE.quill,
     STORAGE.postgre,
+    STORAGE.liquibase,
     AUTH.jwt
   )
 }

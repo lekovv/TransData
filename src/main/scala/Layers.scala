@@ -1,5 +1,6 @@
 import auth.AuthLive
 import config.ConfigApp
+import liquibase.LiquibaseService
 import scheduler.SchedulerLive
 import service.admin.AdminRepo
 import service.spark.{Spark, SparkLive}
@@ -33,6 +34,8 @@ object Layers {
   val all =
     runtime >+>
       base >+>
+      LiquibaseService.live >+>
+      LiquibaseService.layer >+>
       client >+>
       server >+>
       AdminRepo.live >+>
