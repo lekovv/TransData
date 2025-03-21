@@ -1,6 +1,6 @@
 package service.transaction
 
-import exception.Exceptions.InternalDatabaseException
+import exception.AppError.InternalDatabaseException
 import io.getquill.{PostgresZioJdbcContext, SnakeCase}
 import models.{TransactionsModel, TransactionsRequest}
 import zio.{IO, URLayer, ZIO, ZLayer}

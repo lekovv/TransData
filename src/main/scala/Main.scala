@@ -1,4 +1,5 @@
 import endpoints.Endpoints
+import scheduler.SchedulerLive
 import service.spark.SparkLive
 import zio.Console.printLine
 import zio.Runtime.setConfigProvider
@@ -21,10 +22,11 @@ object Main extends ZIOAppDefault {
 
   private val program =
     for {
-      _     <- ZIO.logInfo("Server is running")
-      http  <- startServer.exitCode.fork
-      spark <- ZIO.serviceWithZIO[SparkLive](_.analyzeData()).fork
-      code  <- http.join *> spark.join
+      _       <- ZIO.logInfo("Server is running")
+      http    <- startServer.exitCode.fork
+      spark   <- ZIO.service[SparkLive]
+      metrics <- ZIO.serviceWithZIO[SchedulerLive](_.repeat24hours(() => spark.analyzeData())).fork
+      code    <- http.join *> metrics.join
     } yield code
 
   override def run: UIO[ExitCode] = {

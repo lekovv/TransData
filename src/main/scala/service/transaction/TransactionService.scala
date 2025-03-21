@@ -1,6 +1,6 @@
 package service.transaction
 
-import exception.Exceptions.InternalDatabaseException
+import exception.AppError.InternalDatabaseException
 import models.TransactionsRequest
 import zio.ZIO
 

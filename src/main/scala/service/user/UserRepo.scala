@@ -1,6 +1,6 @@
 package service.user
 
-import exception.Exceptions.InternalDatabaseException
+import exception.AppError.InternalDatabaseException
 import models.UserRequest
 import zio.macros.accessible
 import zio.{IO, URLayer}

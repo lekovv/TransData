@@ -1,6 +1,6 @@
 package service.user
 
-import exception.Exceptions.InternalDatabaseException
+import exception.AppError.InternalDatabaseException
 import io.getquill.{PostgresZioJdbcContext, SnakeCase}
 import models.{UserModel, UserRequest}
 import zio.{IO, URLayer, ZIO, ZLayer}

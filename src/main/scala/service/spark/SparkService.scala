@@ -1,13 +1,13 @@
 package service.spark
 
-import exception.SparkError
-import exception.SparkError.MetricNotFoundException
+import exception.AppError
+import exception.AppError.MetricNotFoundException
 import models.{AmountModel, CountryStatsModel, TopUsersModel}
 import zio.ZIO
 
 object SparkService {
 
-  def getAmountMetric: ZIO[SparkLive, SparkError, AmountModel] = {
+  def getAmountMetric: ZIO[SparkLive, AppError, AmountModel] = {
     for {
       spark   <- ZIO.service[SparkLive]
       metrics <- spark.sendData()
@@ -25,7 +25,7 @@ object SparkService {
     } yield result
   }
 
-  def getTopUsers: ZIO[SparkLive, SparkError, TopUsersModel] = {
+  def getTopUsers: ZIO[SparkLive, AppError, TopUsersModel] = {
     for {
       spark   <- ZIO.service[SparkLive]
       metrics <- spark.sendData()
@@ -50,7 +50,7 @@ object SparkService {
     } yield result
   }
 
-  def getCountryStats: ZIO[SparkLive, SparkError, CountryStatsModel] = {
+  def getCountryStats: ZIO[SparkLive, AppError, CountryStatsModel] = {
     for {
       spark   <- ZIO.service[SparkLive]
       metrics <- spark.sendData()

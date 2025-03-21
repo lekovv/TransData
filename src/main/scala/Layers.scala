@@ -1,5 +1,6 @@
 import auth.AuthLive
 import config.ConfigApp
+import scheduler.SchedulerLive
 import service.admin.AdminRepo
 import service.spark.{Spark, SparkLive}
 import service.transaction.TransactionRepo
@@ -36,6 +37,7 @@ object Layers {
       server >+>
       AdminRepo.live >+>
       AuthLive.layer >+>
+      SchedulerLive.layer >+>
       UserRepo.live >+>
       TransactionRepo.live >+>
       Spark.live >+>

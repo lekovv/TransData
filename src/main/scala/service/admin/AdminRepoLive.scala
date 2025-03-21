@@ -1,6 +1,6 @@
 package service.admin
-import exception.AuthError
-import exception.AuthError.InternalException
+import exception.AppError
+import exception.AppError.InternalException
 import io.getquill.{PostgresZioJdbcContext, SnakeCase}
 import models.Admin
 import zio.{IO, URLayer, ZIO, ZLayer}
@@ -19,7 +19,7 @@ case class AdminRepoLive(ds: DataSource) extends AdminRepo {
     querySchema[Admin]("public.admin")
   }
 
-  override def getAdmin(username: String): IO[AuthError, Option[Admin]] = {
+  override def getAdmin(username: String): IO[AppError, Option[Admin]] = {
 
     ctx
       .run(adminSchema.filter(_.username == lift(username)))

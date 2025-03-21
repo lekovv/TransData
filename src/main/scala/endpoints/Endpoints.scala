@@ -3,10 +3,10 @@ package endpoints
 import auth.AuthLive
 import auth.AuthLive.bearerAuthMiddleware
 import auth.AuthService.authentication
-import exception.AuthError.{AdminNotFoundException, InternalException, PasswordMismatchException}
-import exception.Exceptions.InternalDatabaseException
-import exception.SparkError.{MetricNotFoundException, SparkCalculateException, SparkReadException, SparkSaveException}
-import exception.{AuthError, SparkError}
+import exception.AppError.{AdminNotFoundException, InternalException, PasswordMismatchException}
+import exception.AppError.InternalDatabaseException
+import exception.AppError.{MetricNotFoundException, SparkCalculateException, SparkReadException, SparkSaveException}
+import exception.AppError
 import models._
 import service.admin.AdminRepo
 import service.spark.SparkLive
@@ -39,7 +39,7 @@ object Endpoints {
   private val getAmountMetricAPI =
     Endpoint(RoutePattern.GET / "api" / "spark" / "amount")
       .out[AmountModel]
-      .outErrors[SparkError](
+      .outErrors[AppError](
         HttpCodec.error[SparkReadException](Status.InternalServerError),
         HttpCodec.error[SparkCalculateException](Status.InternalServerError),
         HttpCodec.error[SparkSaveException](Status.InternalServerError),
@@ -49,7 +49,7 @@ object Endpoints {
   private val getTopUsersMetricAPI =
     Endpoint(RoutePattern.GET / "api" / "spark" / "top-users")
       .out[TopUsersModel]
-      .outErrors[SparkError](
+      .outErrors[AppError](
         HttpCodec.error[SparkReadException](Status.InternalServerError),
         HttpCodec.error[SparkCalculateException](Status.InternalServerError),
         HttpCodec.error[SparkSaveException](Status.InternalServerError),
@@ -59,7 +59,7 @@ object Endpoints {
   private val getCountryStatsAPI =
     Endpoint(RoutePattern.GET / "api" / "spark" / "country-stats")
       .out[CountryStatsModel]
-      .outErrors[SparkError](
+      .outErrors[AppError](
         HttpCodec.error[SparkReadException](Status.InternalServerError),
         HttpCodec.error[SparkCalculateException](Status.InternalServerError),
         HttpCodec.error[SparkSaveException](Status.InternalServerError),
@@ -70,7 +70,7 @@ object Endpoints {
     Endpoint(RoutePattern.POST / "login")
       .in[Login]
       .out[String]
-      .outErrors[AuthError](
+      .outErrors[AppError](
         HttpCodec.error[InternalException](Status.Unauthorized),
         HttpCodec.error[AdminNotFoundException](Status.Unauthorized),
         HttpCodec.error[PasswordMismatchException](Status.Unauthorized)

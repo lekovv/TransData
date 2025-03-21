@@ -1,7 +1,7 @@
 package service.spark
 import config.ConfigApp
-import exception.SparkError
-import exception.SparkError.{SparkCalculateException, SparkReadException, SparkSaveException}
+import exception.AppError
+import exception.AppError.{SparkCalculateException, SparkReadException, SparkSaveException}
 import models.Metric
 import org.apache.spark.sql.DataFrame
 import org.apache.spark.sql.functions._
@@ -14,7 +14,7 @@ case class SparkLive(
     password: String
 ) {
 
-  private def readTransactions(): IO[SparkError, DataFrame] = ZIO
+  private def readTransactions(): IO[AppError, DataFrame] = ZIO
     .attempt {
 
       spark.session.read
@@ -28,7 +28,7 @@ case class SparkLive(
     }
     .mapError(err => SparkReadException(s"failed to read transactions ${err.getMessage}"))
 
-  private def readUsers(): IO[SparkError, DataFrame] = ZIO
+  private def readUsers(): IO[AppError, DataFrame] = ZIO
     .attempt {
 
       spark.session.read
@@ -42,7 +42,7 @@ case class SparkLive(
     }
     .mapError(err => SparkReadException(s"failed to read users ${err.getMessage}"))
 
-  private def calculateMetrics(dfTrans: DataFrame, dfUsers: DataFrame): IO[SparkError, List[Metric]] = ZIO
+  private def calculateMetrics(dfTrans: DataFrame, dfUsers: DataFrame): IO[AppError, List[Metric]] = ZIO
     .attempt {
 
       val transDF = dfTrans.alias("trans")
@@ -85,7 +85,7 @@ case class SparkLive(
     }
     .mapError(err => SparkCalculateException(s"failed to calculate metric ${err.getMessage}"))
 
-  private def saveMetrics(metrics: List[Metric]): IO[SparkError, List[Unit]] = ZIO
+  private def saveMetrics(metrics: List[Metric]): IO[AppError, List[Unit]] = ZIO
     .attempt {
 
       metrics.map { metric =>
@@ -104,7 +104,7 @@ case class SparkLive(
     }
     .mapError(err => SparkSaveException(s"failed to calculate metric ${err.getMessage}"))
 
-  def analyzeData(): IO[SparkError, Unit] = {
+  def analyzeData(): IO[AppError, Unit] = {
     for {
       transactions <- readTransactions()
       users        <- readUsers()
@@ -114,7 +114,7 @@ case class SparkLive(
     } yield ()
   }
 
-  def sendData(): IO[SparkError, List[Metric]] = {
+  def sendData(): IO[AppError, List[Metric]] = {
     for {
       transactions <- readTransactions()
       users        <- readUsers()

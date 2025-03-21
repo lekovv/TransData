@@ -1,14 +1,14 @@
 package auth
 
-import auth.AuthLive.{checkPassword, jwtEncode, SECRET_TOKEN}
-import exception.AuthError
-import exception.AuthError._
+import auth.AuthLive.{SECRET_TOKEN, checkPassword, jwtEncode}
+import exception.AppError
+import exception.AppError._
 import io.circe.syntax.EncoderOps
 import models.{Admin, JwtClaimData, Login}
 import pdi.jwt.{JwtAlgorithm, JwtClaim, JwtZIOJson}
 import service.admin.AdminRepo
 import zio.http.{Handler, HandlerAspect, Header, Headers, Request, Response}
-import zio.{IO, ZIO, ZLayer}
+import zio.{IO, URLayer, ZIO, ZLayer}
 
 import java.time.Instant
 import java.util.UUID
@@ -16,7 +16,7 @@ import scala.util.Try
 
 final case class AuthLive(admin: AdminRepo) {
 
-  def authentication(login: Login): IO[AuthError, String] = {
+  def authentication(login: Login): IO[AppError, String] = {
     for {
       admin <- admin.getAdmin(login.username)
       jwt <- admin match {
@@ -83,7 +83,7 @@ object AuthLive {
   private def jwtDecode(token: String, key: String): Try[JwtClaim] =
     JwtZIOJson.decode(token, key, Seq(JwtAlgorithm.HS256))
 
-  val layer = ZLayer.fromZIO {
+  val layer: URLayer[AdminRepo, AuthLive] = ZLayer.fromZIO {
     for {
       admin <- ZIO.service[AdminRepo]
     } yield AuthLive(admin)
